@@ -1,0 +1,255 @@
+React Route Dom Hooks
+
+1) useHistory
+2) useLocation
+3) useParams
+4) useRouterMatch
+
+Q) What can we do with the history object ?
+=> We can navigate to differnet pages adding links, we can know where we are in relations
+to the URL.
+The useHistory hook allows us to access React Router's history object.
+
+Through the history object, we can access and manipulate the current state of the browser history.
+
+Now suppose, one of the routes for example 'Contact Us' is a protected route and you need to redirect 
+the user to that component only if they have logged in to your app otherwise they will be redirected back
+to the homepage, so for this purpose we will create a login button on App.js file which will be false by 
+default but clicking on it will login the user. We will also declare a useState hook where we will keep 
+track of the state of the login button:
+const [login,setLogin] = useState(false);
+<button onClick={()=>setLogin(!login)}>{login ? "Login" : "Log out"}</button>
+And in the ContactUs component, we can define the redirect path based on the value of login button as follows:
+<Route path="/contact">
+{login ? <ContactUs /> : <Redirect to="/" />}
+</Route>
+Now, you can see if the user is logged in, only then they can visit the Contact Us page otherwise they will be
+ redirected to the homepage.
+Another way of doing this is through the useHistory hook.
+
+1.1) 
+
+import { useState } from "react";
+import {
+  BrowserRouter,
+  Switch,
+  Route,
+  Link,
+  NavLink,
+  Redirect,
+} from "react-router-dom";
+import Home from "./Home";
+import About from "./About";
+import Contact from "./Contact";
+import NotFound from "./NotFound";
+import "./App.css";
+function App() {
+  const [isLogin, setIsLogin] = useState(false);
+  return (
+    <>
+      <BrowserRouter>
+        <div className="App">
+          <h1>React Router Dom</h1>
+          <nav>
+            <ul>
+              <li>
+                {" "}
+                <NavLink to="/">Home</NavLink>
+              </li>
+              <li>
+                {" "}
+                <NavLink to="/contact">Contact</NavLink>
+              </li>
+              <li>
+                {" "}
+                <NavLink to="/about">About</NavLink>
+              </li>
+            </ul>
+          </nav>
+          <button
+            onClick={() => setIsLogin(!isLogin)}
+            style={{ backgroundColor: isLogin ? "red" : "green" }}
+          >
+            {isLogin ? "Logout" : "Login"}{" "}
+          </button>
+          <Switch>
+            <Route exact path="/">
+              <Home />
+            </Route>
+            <Route path="/contact">
+              {isLogin ? <Contact /> : <Redirect to="/" />}
+            </Route>
+            <Route path="/about">
+              <About />
+            </Route>
+            <Route path="*">
+              <NotFound />
+            </Route>
+          </Switch>
+        </div>
+      </BrowserRouter>
+    </>
+  );
+}
+
+export default App;
+
+1.2) In the Contact Us component, we will pass the login prop and depending on the value of login, we will let
+the history.push method render the correct component in the following manner:
+import React from 'react'
+import { useHistory, useEffect } from 'react-router-dom'
+
+export const ContactUs = ({login}) => {
+    const history = useHistory();
+
+    useEffect(()=>{
+        if(!login){
+            history.push("/")
+        }
+},[login,history]);
+
+    return (
+        <div>
+            This is the Contact Us Page
+        </div>
+    )
+}
+Also, remember to make the Contact Us route on App.js a normal route before importing useHistory in the 
+respective component:
+     <Route path="/contact">
+       <ContactUs login={login}/>
+     </Route>
+
+Q) In this example we used a literal button to push /home to the history stack. You don’t have to use
+ a button or have the user interact directly with your application at all though. Maybe you have a 
+ landing page and want to automatically move to the home page after a predetermined amount of time. Combine setTimeout with history!
+
+useEffect(() => {
+  const timer = setTimeout(() => { 
+    history.push("/home");
+  }, 5000); // This will run after 5 seconds!
+  return () => clearTimeout(timer);
+}, []);
+
+There are a number of other properties that are usually included within the history object. In this example we 
+used history.push, but you could also use:
+
+length - (number) The number of entries in the history stack
+action - (string) The current action (PUSH, REPLACE, or POP)
+push(path, [state]) - (function) Pushes a new entry onto the history stack
+replace(path, [state]) - (function) Replaces the current entry on the history stack
+go(n) - (function) Moves the pointer in the history stack by n entries
+goBack() - (function) Equivalent to go(-1)
+goForward() - (function) Equivalent to go(1)
+block(prompt) - (function) Prevents navigation
+
+Q) <BrowserRouter>
+A <Router> that uses the HTML5 history API (pushState, replaceState and the popstate event) to keep your
+ UI in sync with the URL.
+
+1) basename: string
+The base URL for all locations. If your app is served from a sub-directory on your server, you’ll want to 
+set this to the sub-directory. A properly formatted basename should have a leading slash, but no trailing slash.
+
+<BrowserRouter basename="/calendar">
+    <Link to="/today"/> // renders <a href="/calendar/today">
+    <Link to="/tomorrow"/> // renders <a href="/calendar/tomorrow">
+    ...
+</BrowserRouter>
+
+2) getUserConfirmation: func
+A function to use to confirm navigation. Defaults to using window.confirm.<BrowserRouter
+
+  getUserConfirmation={(message, callback) => {
+    // this is the default behavior
+    const allowTransition = window.confirm(message);
+    callback(allowTransition);
+  }}
+/>
+
+3) forceRefresh: bool
+ If true the router will use full page refreshes on page navigation. You may want to use this to imitate the way a
+ traditional server-rendered app would work with full page refreshes between page navigation.<BrowserRouter forceRefresh={true} />
+    <BrowserRouter forceRefresh={true} />
+
+ 4) keyLength: number
+   The length of location.key. Defaults to 6.<BrowserRouter keyLength={12} />
+    <BrowserRouter keyLength={12} />
+
+ 5)  children: node
+    The child elements to render.Note: On React < 16 you must use a single child element since a render method cannot return
+    more than one element. If you need more than one element, you might try wrapping them in an extra <div> or <React.Fragment>.
+
+
+2.1)useLocation
+
+For example, your React app is taller than the height of the screen (100 vh) and you want to scroll to the top of the page
+ every time the user switches the route. To archive this purpose, you can do like this:
+// App.js
+import React, { useEffect } from 'react';
+import {
+  BrowserRouter as Router,
+  Route,
+  Switch,
+  Link,
+  useLocation,
+} from 'react-router-dom';
+
+// Create a custom hook that uses both useLocation and useEffect
+const useScrollToTop = () => {
+  const location = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+   // scroll to the top of the browser window when changing route
+   // the window object is a normal DOM object and is safe to use in React.
+  }, [location]);
+};
+
+// This is corresponding to "/" route
+const Home = (props) => {
+  useScrollToTop();
+  return (
+    <>
+      <h1>Home</h1>
+      <hr />
+      <p style={{ marginTop: '150vh' }}>
+        <Link to="/contact">Go to contact page</Link>
+      </p>
+    </>
+  );
+};
+
+// This is corresponding to "/contact" route
+const Contact = (props) => {
+  useScrollToTop();
+  return (
+    <>
+      <h1>Contact</h1>
+      <hr />
+      <p style={{ marginTop: '150vh' }}>
+        <Link to="/">Go to homepage</Link>
+      </p>
+    </>
+  );
+};
+ 
+// The root component
+const App = () => {
+  return (
+    <div style={{ padding: 50 }}>
+      <Router>
+        <Switch>
+          <Route path="/" exact>
+            <Home />
+          </Route>
+
+          <Route path="/contact" exact>
+            <Contact />
+          </Route>
+        </Switch>
+      </Router>
+    </div>
+  );
+};
+
+export default App;
